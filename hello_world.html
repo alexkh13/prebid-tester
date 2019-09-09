@@ -10,7 +10,7 @@
 <html>
   <head>
       <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
-      <script async src="https://acdn.adnxs.com/prebid/not-for-prod/1/prebid.js"></script>
+      <script async src="//acdn.adnxs.com/prebid/not-for-prod/1/prebid.js"></script>
       <script async src="https://www.googletagservices.com/tag/js/gpt.js"></script>
       <script>
         var FAILSAFE_TIMEOUT = 3300;
@@ -64,6 +64,11 @@
         });
   
         pbjs.que.push(function() {
+          pbjs.setConfig({
+            "schain": {
+              "validation": "off"
+            }
+          });
           pbjs.addAdUnits(adUnits);
           pbjs.requestBids({
             bidsBackHandler: sendAdserverRequest,
