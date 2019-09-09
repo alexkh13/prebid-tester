@@ -9,11 +9,38 @@
 
 <html>
   <head>
+      <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
       <script async src="https://acdn.adnxs.com/prebid/not-for-prod/1/prebid.js"></script>
       <script async src="https://www.googletagservices.com/tag/js/gpt.js"></script>
       <script>
         var FAILSAFE_TIMEOUT = 3300;
         var PREBID_TIMEOUT = 1000;
+
+        var base64 = getParameterByName('bid');
+
+        var bid, defaultBid = {
+            bidder: 'appnexus',
+            params: {
+              placementId: 13144370
+            }
+        }
+
+        try {
+          if (base64) {
+            bid = JSON.parse(atob(base64));
+          } else {
+            bid = JSON.parse(localStorage.getItem('bid'));
+          }
+        }
+        catch(err) {
+          $(function() {
+            $("#bid_error").text(err);
+          });
+        }
+        
+        if (!bid) {
+          bid = defaultBid;
+        }
   
         var adUnits = [{
           code: 'div-gpt-ad-1460505748561-0',
@@ -23,21 +50,13 @@
             }
           },
           // Replace this object to test a new Adapter!
-          bids: [{
-            bidder: 'appnexus',
-            params: {
-              placementId: 13144370
-            }
-          }]
+          bids: [bid]
   
         }];
   
         var pbjs = pbjs || {};
         pbjs.que = pbjs.que || [];
   
-      </script>
-  
-      <script>
         var googletag = googletag || {};
         googletag.cmd = googletag.cmd || [];
         googletag.cmd.push(function() {
@@ -61,6 +80,48 @@
               googletag.pubads().refresh();
             });
           });
+        }
+
+        function getParameterByName(name) {
+          var url = window.location.href;
+          name = name.replace(/[\[\]]/g, '\\$&');
+          var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+              results = regex.exec(url);
+          if (!results) return null;
+          if (!results[2]) return '';
+          return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        function onBidChange(init) {
+          if (!init && base64) {
+            base64 = null;
+            history.replaceState(null, '', location.href.replace(/&bid\=.*$/, ''));
+          }
+
+          var bid = $("#bid").val();
+          
+          try {
+            bid = JSON.stringify(JSON.parse(bid), null, 2);
+            $("#bid").val(bid);
+            $("#link").val(
+              location.href +
+              (location.href.includes('?')?'&':'?') +
+              "bid=" + btoa(bid)
+            );
+          } 
+          catch (err) {
+            $("#bid_error").text(err);
+            $("#link").val("");
+          }
+
+          if (bid) {
+            localStorage.setItem('bid', bid);
+          }
+          else {
+            localStorage.removeItem('bid');
+          }
+
+          $("#bid_error").text("");
         }
   
         setTimeout(function() {
@@ -87,5 +148,15 @@
         googletag.cmd.push(function() { googletag.display('div-gpt-ad-1460505748561-0'); });
       </script>
   </div>
+  <p>Edit this JSON bid and refresh the page</p>
+  <textarea id="bid" onchange="onBidChange()" cols="50" rows="15"></textarea>
+  <br>
+  <p>Share this bid request</p>
+  <textarea id="link" readonly cols="50" rows="15"></textarea>
+  <div id="bid_error" style="color:red"></div>
+  <script>
+  document.getElementById('bid').value = bid ? JSON.stringify(bid, null, 2) : localStorage.getItem('bid');
+  onBidChange(true);
+  </script>
   </body>
   </html>
