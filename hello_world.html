@@ -15,16 +15,13 @@
       <script>
         var FAILSAFE_TIMEOUT = 3300;
         var PREBID_TIMEOUT = 1000;
-
         var base64 = getParameterByName('bid');
-
         var bid, defaultBid = {
             bidder: 'appnexus',
             params: {
               placementId: 13144370
             }
         }
-
         try {
           if (base64) {
             bid = JSON.parse(atob(base64));
@@ -41,6 +38,8 @@
         if (!bid) {
           bid = defaultBid;
         }
+
+        var gAdUnit = getParameterByName('unit') || localStorage.getItem('gAdUnit') || '/19968336/header-bid-tag-0';
   
         var adUnits = [{
           code: 'div-gpt-ad-1460505748561-0',
@@ -86,7 +85,6 @@
             });
           });
         }
-
         function getParameterByName(name) {
           var url = window.location.href;
           name = name.replace(/[\[\]]/g, '\\$&');
@@ -96,13 +94,11 @@
           if (!results[2]) return '';
           return decodeURIComponent(results[2].replace(/\+/g, ' '));
         }
-
         function onBidChange(init) {
           if (!init && base64) {
             base64 = null;
             history.replaceState(null, '', location.href.replace(/&bid\=.*$/, ''));
           }
-
           var bid = $("#bid").val();
           
           try {
@@ -111,24 +107,36 @@
             $("#link").val(
               location.href +
               (location.href.includes('?')?'&':'?') +
-              "bid=" + btoa(bid)
+              "unit=" + gAdUnit +
+              "&bid=" + btoa(bid)
             );
           } 
           catch (err) {
             $("#bid_error").text(err);
             $("#link").val("");
           }
-
           if (bid) {
             localStorage.setItem('bid', bid);
           }
           else {
             localStorage.removeItem('bid');
           }
-
           $("#bid_error").text("");
         }
   
+  		function onUnitChange() {
+  			var value = $("#unit").val();
+  			if (value) {
+  				localStorage.setItem('gAdUnit', value);
+  			} else {
+  				localStorage.removeItem('gAdUnit');
+  			}
+  		}
+
+  		function toggleShare() {
+  			$("#link").toggle();
+  		}
+
         setTimeout(function() {
           sendAdserverRequest();
         }, FAILSAFE_TIMEOUT);
@@ -137,7 +145,7 @@
   
       <script>
         googletag.cmd.push(function () {
-          googletag.defineSlot('/19968336/header-bid-tag-0', [[300, 250], [300, 600]], 'div-gpt-ad-1460505748561-0').addService(googletag.pubads());
+          googletag.defineSlot(gAdUnit, [[300, 250]], 'div-gpt-ad-1460505748561-0').addService(googletag.pubads());
   
           googletag.pubads().enableSingleRequest();
           googletag.enableServices();
@@ -155,12 +163,15 @@
   </div>
   <p>Edit this JSON bid and refresh the page</p>
   <textarea id="bid" onchange="onBidChange()" cols="50" rows="15"></textarea>
+  <br><br>
+  Google: <textarea id="unit" onchange="onUnitChange()" cols="50" rows="2"></textarea>
   <br>
-  <p>Share this bid request</p>
-  <textarea id="link" readonly cols="50" rows="15"></textarea>
+  <p onclick="toggleShare()" style="cursor:pointer">Share</p>
+  <textarea id="link" readonly cols="50" rows="15" style="display:none"></textarea>
   <div id="bid_error" style="color:red"></div>
   <script>
   document.getElementById('bid').value = bid ? JSON.stringify(bid, null, 2) : localStorage.getItem('bid');
+  document.getElementById('unit').value = gAdUnit;
   onBidChange(true);
   </script>
   </body>
