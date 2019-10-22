@@ -34,12 +34,14 @@
             $("#bid_error").text(err);
           });
         }
+
+        var unitFromParams = getParameterByName('unit');
         
         if (!bid) {
           bid = defaultBid;
         }
 
-        var gAdUnit = getParameterByName('unit') || localStorage.getItem('gAdUnit') || '/19968336/header-bid-tag-0';
+        var gAdUnit = unitFromParams || localStorage.getItem('gAdUnit') || '/19968336/header-bid-tag-0';
   
         var adUnits = [{
           code: 'div-gpt-ad-1460505748561-0',
@@ -126,6 +128,10 @@
   
   		function onUnitChange() {
   			var value = $("#unit").val();
+  			if (unitFromParams) {
+  				unitFromParams = null;
+            	history.replaceState(null, '', location.href.replace(/\?unit\=.*$/, ''));
+  			}
   			if (value) {
   				localStorage.setItem('gAdUnit', value);
   			} else {
